@@ -1,4 +1,7 @@
-import functools
+from functools import reduce
+from collections import OrderedDict
+
+from hash_utils import hash_block, hash_string_256
 
 # initialize blockchain.
 
@@ -7,7 +10,8 @@ MINING_REWARDS = 10
 genesis_block = {
     "previous_hash": '',
     "index": 0,
-    "transactions": []
+    "transactions": [],
+    "proof": 100
 }
 blockchain = [genesis_block]
 open_transactions = []
@@ -38,11 +42,16 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     :recipient: The recipient of the crypto.
     :amount: The amount of crypto.
     """
-    transactions = {
-        "sender": sender,
-        "recipient": recipient,
-        "amount": amount,
-    }
+    # transactions = {
+    #   "sender": sender,
+    #  "recipient": recipient,
+    # "amount": amount,
+    # }
+    transactions = OrderedDict([
+        ('sender', sender),
+        ('recipient', recipient),
+        ('amount', amount)
+    ])
     if verify_transaction(transactions):
         open_transactions.append(transactions)
         participants.add(sender)
@@ -63,18 +72,32 @@ def mine_block():
     last_block = blockchain[-1]
     hashed_block = hash_block(last_block)
     # print(hashed_block)
-    reward_transaction = {
-        "sender": 'MINING',
-        "recipient": owner,
-        'amount': MINING_REWARDS,
-    }
+    proof = proof_of_work()
+    # reward_transaction = {
+    #   "sender": 'MINING',
+    #  "recipient": owner,
+    # 'amount': MINING_REWARDS,
+    # }
+    reward_transaction = OrderedDict([
+        ('sender', 'MINING'),
+        ('recipient', owner),
+        ('amount', MINING_REWARDS)
+    ])
+
     copied_transaction = open_transactions[:]
     copied_transaction.append(reward_transaction)
-    block = {
-        "previous_hash": hashed_block,
-        "index": len(blockchain),
-        "transactions": copied_transaction,
-    }
+    # block = {
+    #   "previous_hash": hashed_block,
+    #  "index": len(blockchain),
+    # "transactions": copied_transaction,
+    # "proof": proof
+    # }
+    block = OrderedDict([
+        ('previous_hash', hashed_block),
+        ('index', len(blockchain)),
+        ('transaction', copied_transaction),
+        ('proof', proof),
+    ])
     blockchain.append(block)
     return True
 
@@ -98,26 +121,34 @@ def get_balance(participant):
                  for block in blockchain]
     open_tx_senders = [tx['amount'] for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_senders)
-    amount_sent = functools.reduce(
+    amount_sent = reduce(
         lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
         if len(tx_amt) > 0 else tx_sum + 0,
         tx_sender, 0)
     tx_recipient = [[tx['amount'] for tx in block['transactions']
                      if tx['recipient'] == participant]
                     for block in blockchain]
-    amount_received = functools.reduce(
+    amount_received = reduce(
         lambda tx_sum, tx_amt: tx_sum + sum(tx_amt)
         if len(tx_amt) > 0 else tx_sum + 0,
         tx_recipient, 0)
     return amount_received - amount_sent
 
 
-def hash_block(block):
-    """Hashes the block
-    Arguments:
-        :block: block that should be hashed
-    """
-    return '-'.join(str(block[key]) for key in block)
+def valid_block(transaction, last_hash, proof):
+    guess = (str(transaction) + str(last_hash) + str(proof)).encode()
+    guess_hash = hash_string_256(guess)
+    print(guess_hash)
+    return guess_hash[0:2] == '00'
+
+
+def proof_of_work():
+    last_blockchain = blockchain[-1]
+    last_block = hash_block(last_blockchain)
+    proof = 0
+    while not valid_block(open_transactions, last_block, proof):
+        proof += 1
+    return proof
 
 
 def get_user_choice():
@@ -132,6 +163,9 @@ def verify_blockchain():
         if index == 0:
             continue
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
+            return False
+        if not valid_block(block['transactions'][:-1], block['previous_hash'], block['proof']):
+            print('Invalid chain')
             return False
         return True
 
