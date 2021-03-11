@@ -45,7 +45,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\utility\hash_utils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\utility\verification.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\verification.py">
+          <value>
+            <Attribute>
+              <option name="separator" value=":" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\wallet.py">
           <value>
             <Attribute>
               <option name="separator" value=":" />
