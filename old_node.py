@@ -3,6 +3,14 @@ from utility.verification import Verification
 from wallet import Wallet
 
 
+def get_transaction_value():
+    """ Returns the input of the user (a new transaction amount) as a float. """
+    # Get the user input, transform it from a string to a float and store it in user_input
+    tx_recipient = input('Enter the recipient of the transaction: ')
+    tx_amount = float(input('Your transaction amount please: '))
+    return tx_recipient, tx_amount
+
+
 class Node:
     """The node which runs the local blockchain instance.
 
@@ -16,14 +24,6 @@ class Node:
         self.wallet = Wallet()
         self.wallet.create_keys()
         self.blockchain = Blockchain(self.wallet.public_key)
-
-    @staticmethod
-    def get_transaction_value():
-        """ Returns the input of the user (a new transaction amount) as a float. """
-        # Get the user input, transform it from a string to a float and store it in user_input
-        tx_recipient = input('Enter the recipient of the transaction: ')
-        tx_amount = float(input('Your transaction amount please: '))
-        return tx_recipient, tx_amount
 
     @staticmethod
     def get_user_choice():
@@ -58,7 +58,7 @@ class Node:
             print('q: Quit')
             user_choice = self.get_user_choice()
             if user_choice == '1':
-                tx_data = self.get_transaction_value()
+                tx_data = get_transaction_value()
                 recipient, amount = tx_data
                 # Add the transaction amount to the blockchain
                 signature = self.wallet.sign_transaction(self.wallet.public_key, recipient, amount)
